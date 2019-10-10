@@ -34,10 +34,10 @@ var (
 	topicPartitions                    *prometheus.Desc
 	topicCurrentOffset                 *prometheus.Desc
 	topicOldestOffset                  *prometheus.Desc
-	topicPartitionLeader               *prometheus.Desc
+	//topicPartitionLeader               *prometheus.Desc
 	topicPartitionReplicas             *prometheus.Desc
 	topicPartitionInSyncReplicas       *prometheus.Desc
-	topicPartitionUsesPreferredReplica *prometheus.Desc
+	//topicPartitionUsesPreferredReplica *prometheus.Desc
 	topicUnderReplicatedPartition      *prometheus.Desc
 	consumergroupCurrentOffset         *prometheus.Desc
 	consumergroupCurrentOffsetSum      *prometheus.Desc
@@ -205,10 +205,10 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- topicCurrentOffset
 	ch <- topicOldestOffset
 	ch <- topicPartitions
-	ch <- topicPartitionLeader
+	//ch <- topicPartitionLeader
 	ch <- topicPartitionReplicas
-	ch <- topicPartitionInSyncReplicas
-	ch <- topicPartitionUsesPreferredReplica
+	//ch <- topicPartitionInSyncReplicas
+	//ch <- topicPartitionUsesPreferredReplica
 	ch <- topicUnderReplicatedPartition
 	ch <- consumergroupCurrentOffset
 	ch <- consumergroupCurrentOffsetSum
@@ -260,14 +260,14 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 			offset[topic] = make(map[int32]int64, len(partitions))
 			e.mu.Unlock()
 			for _, partition := range partitions {
-				broker, err := e.client.Leader(topic, partition)
-				if err != nil {
-					plog.Errorf("Cannot get leader of topic %s partition %d: %v", topic, partition, err)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionLeader, prometheus.GaugeValue, float64(broker.ID()), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
+				// broker, err := e.client.Leader(topic, partition)
+				// if err != nil {
+				// 	plog.Errorf("Cannot get leader of topic %s partition %d: %v", topic, partition, err)
+				// } else {
+				// 	ch <- prometheus.MustNewConstMetric(
+				// 		topicPartitionLeader, prometheus.GaugeValue, float64(broker.ID()), topic, strconv.FormatInt(int64(partition), 10),
+				// 	)
+				// }
 
 				currentOffset, err := e.client.GetOffset(topic, partition, sarama.OffsetNewest)
 				if err != nil {
@@ -308,15 +308,15 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 					)
 				}
 
-				if broker != nil && replicas != nil && len(replicas) > 0 && broker.ID() == replicas[0] {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(1), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				} else {
-					ch <- prometheus.MustNewConstMetric(
-						topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(0), topic, strconv.FormatInt(int64(partition), 10),
-					)
-				}
+				// if broker != nil && replicas != nil && len(replicas) > 0 && broker.ID() == replicas[0] {
+				// 	ch <- prometheus.MustNewConstMetric(
+				// 		topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(1), topic, strconv.FormatInt(int64(partition), 10),
+				// 	)
+				// } else {
+				// 	ch <- prometheus.MustNewConstMetric(
+				// 		topicPartitionUsesPreferredReplica, prometheus.GaugeValue, float64(0), topic, strconv.FormatInt(int64(partition), 10),
+				// 	)
+				// }
 
 				if replicas != nil && inSyncReplicas != nil && len(inSyncReplicas) < len(replicas) {
 					ch <- prometheus.MustNewConstMetric(
@@ -533,11 +533,11 @@ func main() {
 		[]string{"topic", "partition"}, labels,
 	)
 
-	topicPartitionLeader = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "topic", "partition_leader"),
-		"Leader Broker ID of this Topic/Partition",
-		[]string{"topic", "partition"}, labels,
-	)
+	// topicPartitionLeader = prometheus.NewDesc(
+	// 	prometheus.BuildFQName(namespace, "topic", "partition_leader"),
+	// 	"Leader Broker ID of this Topic/Partition",
+	// 	[]string{"topic", "partition"}, labels,
+	// )
 
 	topicPartitionReplicas = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "topic", "partition_replicas"),
@@ -551,11 +551,11 @@ func main() {
 		[]string{"topic", "partition"}, labels,
 	)
 
-	topicPartitionUsesPreferredReplica = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "topic", "partition_leader_is_preferred"),
-		"1 if Topic/Partition is using the Preferred Broker",
-		[]string{"topic", "partition"}, labels,
-	)
+	// topicPartitionUsesPreferredReplica = prometheus.NewDesc(
+	// 	prometheus.BuildFQName(namespace, "topic", "partition_leader_is_preferred"),
+	// 	"1 if Topic/Partition is using the Preferred Broker",
+	// 	[]string{"topic", "partition"}, labels,
+	// )
 
 	topicUnderReplicatedPartition = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "topic", "partition_under_replicated_partition"),
